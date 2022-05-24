@@ -11,7 +11,7 @@ from ml.datasets import CLASS_INDICES
 """
 Global - EPOCHS for training
 """
-EPOCHS = 600
+EPOCHS = 200
 
 
 def parse_args() -> argparse.Namespace:

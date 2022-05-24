@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+            type="text/javascript"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+            integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+            crossorigin="anonymous"></script>
+    <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/font/octicons.min.css">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='app.css') }}">
+
+    <script>
+        $(document).on('submit', '#upload-form', function(e){
+            e.preventDefault();
+
+            $('#loader').show();
+            $('#result').hide();
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                method: "POST",
+                url: "/api/analyse/",
+                data : formData,
+                processData: false,
+                contentType: false,
+            }).done(function(data) {
+                $('#loader').hide();
+                console.log(data);
+                $('#result-id').val(data.id);
+                $('#result-name').html(data.name);
+                $('#result-category').html(data.category);
+                $('#result-value').html(data.value);
+                $('#result-description').html(data.description);
+                $('#result-image').attr('src', $('#loaded_image').attr('src')).width(244).height(244);
+                $('#result-modal').modal('show')
+            });
+        });
+
+        $(document).on('submit', '#confirm-form', function(e){
+            e.preventDefault();
+
+            $('#confirm-btn').prop('disabled', true);
+            $('#loader-confirm').show();
+
+            var requestId = $('#result-id').val();
+            $.ajax({
+                method: "POST",
+                url: `/api/analyse/confirm/${requestId}/`
+            }).done(function(data) {
+                $('#loader-confirm').hide();
+            });
+        });
+
+        function showImage(input) {
+          if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+              $('#loaded_image').attr('src', e.target.result).width(244).height(244);
+            };
+
+            reader.readAsDataURL(input.files[0]);
+          }
+        }
+
+
+    </script>
+
+</head>
+<body style="background-color:powderblue;">
+<nav class="navbar navbar-expand-md navbar-dark bg-primary">
+    <span class="navbar-brand" style="cursor: pointer">Afeka Project 2022 - Cancer Beauty Moles </span>
+</nav>
+<div class="container-fluid body-content">
+    <div class="row d-flex justify-content-center">
+        <div class="col-md-8 mb-5 mt-3 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="upload-form" enctype="multipart/form-data">
+                        <div class="form-group text-center">
+                            <img id="loaded_image" src="#" alt="" class="card-img-top mb-1"/>
+                            <div style="text-align: center; margin: auto;">
+                                <input class="form-control-file" id="image" type="file" name="image"
+                                       style="text-align: center; margin: auto;" onchange="showImage(this);">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input class="form-control" id="age" type="number" name="age" min="1" max="200" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select class="form-control" name="gender" id="gender">
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </select>
+                        </div>
+                        <input type="submit" value="submit" class="btn btn-primary">
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 text-center">
+            <div class="spinner-border text-primary" id="loader" role="status"
+                 style="width: 3rem; height: 3rem; display: none">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Result</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="result-image" src="#" alt="" class="card-img-top mb-1"/>
+                    <h4 id="result-name"></h4>
+                    <h6 id="result-category"></h6>
+                    <p>With a <span id="result-value"></span>% match</p>
+                    <p id="result-description"></p>
+                </div>
+                <div class="modal-footer">
+                    <div class="spinner-border text-primary" id="loader-confirm" role="status" style="display: none">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <form method="post" id="confirm-form">
+                        <input id="result-id" type="hidden" name="id">
+                        <input id="confirm-btn" type="submit" value="Confirm Analysis" class="btn btn-primary">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

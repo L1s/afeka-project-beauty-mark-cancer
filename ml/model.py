@@ -35,13 +35,14 @@ class PreprocessingLayer(Layer):
 
 
 def create_model(num_classes: int, image_shape: Tuple = _DEFAULT_IMAGE_SHAPE):
+    "instantiate a Keras tensor - image_input_layer, meta_input_layer"
     image_input_layer = Input(shape=image_shape, name='image_input_layer')
     meta_input_layer = Input(shape=ImageMeta.SHAPE, name='meta_input_layer')
 
     resnet = _create_resnet50(image_input_layer)
     densenet = _create_densenet121(image_input_layer)
 
-    "average resnet,densenet"
+    "average resnet,densenet - It takes as input a list of tensors, all of the same shape, and returns a single tensor (also of the same shape)."
     x = Average()([resnet, densenet])
 
     "concat with meta"
@@ -63,18 +64,24 @@ def create_resnet50(num_classes: int, image_shape: Tuple = _DEFAULT_IMAGE_SHAPE)
 
 
 def _create_resnet50(input_layer) -> Model:
+    """
+    imagenet -> pre-training on ImageNet
+    false include top - whether to include the fully-connected layer at the top of the network.
+    """
     base_model = ResNet50(
         input_shape=input_layer.shape[1:],
         weights='imagenet',
         include_top=False)
-
+    "Switch the default trainable to false in each layer"
     for layer in base_model.layers:
         layer.trainable = False
-
+    "The preprocess_input function is meant to adequate/adjust your image to the format the model requires."
     preprocessing = PreprocessingLayer(resnet50_preprocess_input,
                                        name='resnet50_preprocess_input')(input_layer)
     x = base_model(preprocessing)
+    "Global average pooling operation for spatial data."
     x = GlobalAveragePooling2D(name='resnet50_glbavgpool_out')(x)
+    "adding dense layer"
     x = Dense(1024, activation='relu', name='resnet50_dense_out')(x)
 
     return x
@@ -92,6 +99,10 @@ def create_densenet121(num_classes: int, image_shape: Tuple = _DEFAULT_IMAGE_SHA
 
 
 def _create_densenet121(input_layer) -> Model:
+    """
+    imagenet -> pre-training on ImageNet
+    false include top - whether to include the fully-connected layer at the top of the network.
+    """
     base_model = DenseNet121(
         input_shape=input_layer.shape[1:],
         weights='imagenet',
@@ -103,6 +114,7 @@ def _create_densenet121(input_layer) -> Model:
     preprocessing = PreprocessingLayer(densenet_preprocess_input,
                                        name='densenet_preprocess_input')(input_layer)
     x = base_model(preprocessing)
+    "Global average pooling operation for spatial data."
     x = GlobalAveragePooling2D(name='densenet121_glbavgpool_out')(x)
 
     return x
